@@ -174,6 +174,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
                 Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body), propDef = $$$FindPropertyName(classDef, propertyName)
                 Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
                 Set propDef.Type = "%Stream.Object"
+                Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
                 Do classDef.Properties.Insert(propDef)
                 Set tmp(0) = propDef
             } Else {
@@ -195,6 +196,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
             Set tmp(hash) = propDef
             Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
             Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, contentTypeItem.schema, ..packageModel, ..spec))
+            Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
             Do classDef.Properties.Insert(propDef)
         }
     }
