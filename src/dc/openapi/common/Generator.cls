@@ -140,7 +140,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
 
         ; parameter is a parameter object https://swagger.io/specification/#parameter-object
         
-        Set:parameter."$ref"'="" parameter = ##class(dc.openapi.client.ParserUtils).GetObjectByRef(..spec, parameter."$ref", .name)
+        Set:parameter."$ref"'="" parameter = ##class(dc.openapi.common.Utils).GetObjectByRef(..spec, parameter."$ref", .name)
         
         Continue:'$IsObject(parameter)
         Continue:parameter.name=""
@@ -157,7 +157,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
             Continue
         }
 
-        Set sc = $$$ADDSC(sc, ##class(dc.openapi.client.ParserUtils).CommonSchemaProcessForFlatteSpec(classDef, propDef, parameter.schema, ..packageModel, ..spec))
+        Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, parameter.schema, ..packageModel, ..spec))
 
     }
 
@@ -194,7 +194,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
             Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
             Set tmp(hash) = propDef
             Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
-            Set sc = $$$ADDSC(sc, ##class(dc.openapi.client.ParserUtils).CommonSchemaProcessForFlatteSpec(classDef, propDef, contentTypeItem.schema, ..packageModel, ..spec))
+            Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, contentTypeItem.schema, ..packageModel, ..spec))
             Do classDef.Properties.Insert(propDef)
         }
     }
@@ -227,7 +227,7 @@ ClassMethod GetOperationParameters(pathItem As %DynamicObject, operation As %Dyn
     #dim parameters As %DynamicArray = []
 
     Set:$IsObject(operation.parameters) parameters = {}.%FromJSON(operation.parameters.%ToJSON())
-    Set:$IsObject(pathItem.parameters)&&pathItem.parameters.%IsA("%DynamicArray") parameters = ##class(dc.openapi.client.ParserUtils).MergeParametersArray(pathItem.parameters, parameters)
+    Set:$IsObject(pathItem.parameters)&&pathItem.parameters.%IsA("%DynamicArray") parameters = ##class(dc.openapi.common.Utils).MergeParametersArray(pathItem.parameters, parameters)
     
     Quit parameters
 }
