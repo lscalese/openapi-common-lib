@@ -7,6 +7,20 @@
       <Description>This library contains common code for openapi-client-gen and openapi-server-gen.</Description>
       <Packaging>module</Packaging>
       <SourcesRoot>src</SourcesRoot>
+      <Dependencies>
+        <ModuleReference>
+          <Name>yaml-utils</Name>
+          <Version>0.1.1</Version>
+        </ModuleReference>
+        <ModuleReference>
+          <Name>swagger-converter-cli</Name>
+          <Version>0.0.2</Version>
+        </ModuleReference>
+        <ModuleReference>
+          <Name>swagger-validator-cli</Name>
+          <Version>0.0.2</Version>
+        </ModuleReference>
+      </Dependencies>
       <Resource Name="dc.openapi.common.PKG"/>
     </Module>
   </Document>

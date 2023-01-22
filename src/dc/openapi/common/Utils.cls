@@ -79,4 +79,10 @@ ClassMethod ForceNotDefinedMAXLEN(package As %String, maxLenValue As %String = "
     Quit sc
 }
 
+ClassMethod packageExists(packageName As %String) As %Boolean
+{
+    Set packageList = ##class(%Dictionary.PackageDefinition).GetPackageList()
+    Return ''packageList.Find($zcvt(packageName, "U"))
+}
+
 }
