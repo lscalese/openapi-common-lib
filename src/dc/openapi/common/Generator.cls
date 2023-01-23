@@ -167,7 +167,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
     
     While bodyContentIterator.%GetNext(.contentType, .contentTypeItem) {
         
-        Continue:'$IsObject(contentTypeItem.schema)
+        ;Continue:'$IsObject(contentTypeItem.schema)
         
         If 'contentTypeItem.%IsDefined("schema"){
             If '$Data(tmp(0)) {
@@ -177,6 +177,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
                 Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
                 Do classDef.Properties.Insert(propDef)
                 Set tmp(0) = propDef
+                Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
             } Else {
                 Set tmp(0).Description = tmp(0).Description _ $c(13,10) 
                     _"Use this property for body content with content-type = "_contentType _".<br/>"
