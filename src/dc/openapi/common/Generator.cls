@@ -170,16 +170,18 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
         ;Continue:'$IsObject(contentTypeItem.schema)
         
         If 'contentTypeItem.%IsDefined("schema"){
-            If '$Data(tmp(0)) {
+            Set thePropType = $Select($$$LOWER(contentType)="application/json":"%DynamicObject",1:"%Stream.Object")
+            Set hash = $ZCRC(thePropType, 7)
+            If '$Data(tmp(hash)) {
                 Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body), propDef = $$$FindPropertyName(classDef, propertyName)
                 Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
-                Set propDef.Type = "%Stream.Object"
+                Set propDef.Type = thePropType
                 Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
                 Do classDef.Properties.Insert(propDef)
-                Set tmp(0) = propDef
+                Set tmp(hash) = propDef
                 Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
             } Else {
-                Set tmp(0).Description = tmp(0).Description _ $c(13,10) 
+                Set tmp(hash).Description = tmp(hash).Description _ $c(13,10) 
                     _"Use this property for body content with content-type = "_contentType _".<br/>"
             }
             Continue
