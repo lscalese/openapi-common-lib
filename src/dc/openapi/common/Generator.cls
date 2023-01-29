@@ -177,56 +177,6 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
         Do:newProp classDef.Properties.Insert(propDef)
     }
 
-    /*Set bodyContentIterator = operation.requestBody.content.%GetIterator()
-    
-    While bodyContentIterator.%GetNext(.contentType, .contentTypeItem) {
-        
-        
-
-        ;Continue:'$IsObject(contentTypeItem.schema)
-        Set isEmptySchema = 'contentTypeItem.%IsDefined("schema")
-        Set:'isEmptySchema isEmptySchema = (contentTypeItem.schema."$ref" = "") && (contentTypeItem.schema.type = "")
-
-        If isEmptySchema {
-            Set thePropType = $Select($$$LOWER(contentType)="application/json":"%DynamicObject",1:"%Stream.Object")
-            Set hash = $ZCRC(thePropType, 7)
-            If '$Data(tmp(hash)) {
-                Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body), propDef = $$$FindPropertyName(classDef, propertyName)
-                Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
-                Set propDef.Type = thePropType
-                
-                ; In case of many content-type, we cannot put the "required" flag.
-                ; Make this verification in ValidateObject
-                ; Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
-
-                Do classDef.Properties.Insert(propDef)
-                Set tmp(hash) = propDef
-                Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
-            } Else {
-                Set tmp(hash).Description = tmp(hash).Description _ $c(13,10) 
-                    _"Use this property for body content with content-type = "_contentType _".<br/>"
-            }
-            Continue
-        }
-
-        Set hash = $ZCRC(contentTypeItem.schema.%ToJSON(), 7)
-        
-       
-        If $Data(tmp(hash)) {
-            Set tmp(hash).Description = tmp(hash).Description _ $c(13,10) 
-                _"Use this property for body content with content-type = "_contentType _".<br/>"
-        } Else {
-            Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body), propDef = $$$FindPropertyName(classDef, propertyName)
-            Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
-            Set tmp(hash) = propDef
-            Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
-            Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, contentTypeItem.schema, ..packageModel, ..spec))
-            Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
-            Do classDef.Properties.Insert(propDef)
-        }
-    }*/
-
-
     Set sc = $$$ADDSC(sc, classDef.%Save())
 
     Quit sc
