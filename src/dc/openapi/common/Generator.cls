@@ -161,22 +161,44 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
 
     }
 
-    If '$ISOBJECT(operation.requestBody) Quit $$$ADDSC(sc, classDef.%Save())
+    If '$ISOBJECT(operation.requestBody)||'$IsObject(operation.requestBody.content) Quit $$$ADDSC(sc, classDef.%Save())
 
-    Set bodyContentIterator = operation.requestBody.content.%GetIterator()
+    Set helperObj = ..RequestBodyHelper(operation.requestBody.content), helperObjIterator = helperObj.%GetIterator()
+
+    While helperObjIterator.%GetNext(.propertyName, .propertyItem) {
+        Set propDef = $$$FindPropertyName(classDef, propertyName), newProp = $$$NO
+        Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName), newProp = $$$YES
+        If propertyItem.%IsDefined("Type") {
+            Set propDef.Type = propertyItem.Type
+        } Else {
+            Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, propertyItem.schema, ..packageModel, ..spec))
+        }
+        Set propDef.Description = propertyItem.Description
+        Do:newProp classDef.Properties.Insert(propDef)
+    }
+
+    /*Set bodyContentIterator = operation.requestBody.content.%GetIterator()
     
     While bodyContentIterator.%GetNext(.contentType, .contentTypeItem) {
         
-        ;Continue:'$IsObject(contentTypeItem.schema)
         
-        If 'contentTypeItem.%IsDefined("schema"){
+
+        ;Continue:'$IsObject(contentTypeItem.schema)
+        Set isEmptySchema = 'contentTypeItem.%IsDefined("schema")
+        Set:'isEmptySchema isEmptySchema = (contentTypeItem.schema."$ref" = "") && (contentTypeItem.schema.type = "")
+
+        If isEmptySchema {
             Set thePropType = $Select($$$LOWER(contentType)="application/json":"%DynamicObject",1:"%Stream.Object")
             Set hash = $ZCRC(thePropType, 7)
             If '$Data(tmp(hash)) {
                 Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body), propDef = $$$FindPropertyName(classDef, propertyName)
                 Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName)
                 Set propDef.Type = thePropType
-                Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
+                
+                ; In case of many content-type, we cannot put the "required" flag.
+                ; Make this verification in ValidateObject
+                ; Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
+
                 Do classDef.Properties.Insert(propDef)
                 Set tmp(hash) = propDef
                 Set propDef.Description = "Use this property for body content with content-type = "_contentType _".<br/>"
@@ -202,7 +224,7 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
             Set:operation.requestBody.required||(operation.requestBody.required="true") propDef.Required = $$$YES
             Do classDef.Properties.Insert(propDef)
         }
-    }
+    }*/
 
 
     Set sc = $$$ADDSC(sc, classDef.%Save())
@@ -235,6 +257,82 @@ ClassMethod GetOperationParameters(pathItem As %DynamicObject, operation As %Dyn
     Set:$IsObject(pathItem.parameters)&&pathItem.parameters.%IsA("%DynamicArray") parameters = ##class(dc.openapi.common.Utils).MergeParametersArray(pathItem.parameters, parameters)
     
     Quit parameters
+}
+
+ClassMethod RequestBodyHelper(contentDefinition As %DynamicObject) As %DynamicObject
+{
+    Set bodyContentIterator = contentDefinition.%GetIterator(), bodyDef = {}
+
+    While bodyContentIterator.%GetNext(.contentType, .contentTypeItem) {
+    
+        Set isEmptySchema = 'contentTypeItem.%IsDefined("schema")
+        Set:'isEmptySchema isEmptySchema = (contentTypeItem.schema."$ref" = "") && (contentTypeItem.schema.type = "")
+
+        If isEmptySchema {
+    
+            Set thePropType = $Select($$$LOWER(contentType)="application/json":"%DynamicObject",1:"%Stream.Object")
+            Set hash = $ZCRC(thePropType, 7)
+            
+            If '$Data(tmp(hash), propertyName) {
+                Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body)
+                Do bodyDef.%Set(propertyName, {
+                    "Type" : (thePropType),
+                    "Description" : ("Use this property for body content with content-type = "_contentType _".<br/>"),
+                    "contentType" : [(contentType)]
+                })
+                Set tmp(hash) = propertyName
+
+            } Else {
+                
+                Set bodyDef.%Get(propertyName).Description = bodyDef.%Get(propertyName).Description _ $c(13,10) 
+                    _ "Use this property for body content with content-type = "_contentType _".<br/>"
+                Do bodyDef.%Get(propertyName).contentType.%Push(contentType)
+            }
+            Continue
+        }
+
+        Set hash = $ZCRC(contentTypeItem.schema.%ToJSON(), 7)
+        
+       
+        If $Data(tmp(hash),propertyName) {
+
+            Set bodyDef.%Get(propertyName).Description = bodyDef.%Get(propertyName).Description _ $c(13,10) 
+                    _ "Use this property for body content with content-type = "_contentType _".<br/>"
+            Do bodyDef.%Get(propertyName).contentType.%Push(contentType)
+
+        } Else {
+
+            Set propertyName = $$$NormalizePropertyParamName("body") _ $INCREMENT(body)
+            Do bodyDef.%Set(propertyName, {
+                "schema" : (contentTypeItem.schema),
+                "Description" : ("Use this property for body content with content-type = "_contentType _".<br/>"),
+                "contentType" : [(contentType)]
+            })
+            
+            Set tmp(hash) = propertyName
+            
+        }
+
+    }
+
+    Quit bodyDef
+}
+
+ClassMethod GetContentTypeListForProperty(propertyName, operation As %DynamicObject) As %String
+{
+    If '$ISOBJECT(operation.requestBody)||'$IsObject(operation.requestBody.content) Quit ""
+
+    Set helperObj = ..RequestBodyHelper(operation.requestBody.content), helperObjIterator = helperObj.%GetIterator()
+
+    Set propertyItem = helperObj.%Get(propertyName)
+    If '$IsObject(propertyItem) Quit ""
+
+    Set iter  = propertyItem.contentType.%GetIterator(), list = ""
+    While iter.%GetNext(.key, .contentType) {
+        Set list = list _ "," _ contentType
+    }
+
+    Quit $Extract(list, 2, *)
 }
 
 }
