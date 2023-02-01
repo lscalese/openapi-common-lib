@@ -3,22 +3,22 @@
   <Document name="openapi-common-lib.ZPM">
     <Module>
       <Name>openapi-common-lib</Name>
-      <Version>0.0.10</Version>
+      <Version>0.0.11</Version>
       <Description>This library contains common code for openapi-client-gen and openapi-server-gen.</Description>
       <Packaging>module</Packaging>
       <SourcesRoot>src</SourcesRoot>
       <Dependencies>
         <ModuleReference>
           <Name>yaml-utils</Name>
-          <Version>0.1.1</Version>
+          <Version>*</Version>
         </ModuleReference>
         <ModuleReference>
           <Name>swagger-converter-cli</Name>
-          <Version>0.0.2</Version>
+          <Version>*</Version>
         </ModuleReference>
         <ModuleReference>
           <Name>swagger-validator-cli</Name>
-          <Version>0.0.1</Version>
+          <Version>*</Version>
         </ModuleReference>
       </Dependencies>
       <Resource Name="dc.openapi.common.PKG"/>
