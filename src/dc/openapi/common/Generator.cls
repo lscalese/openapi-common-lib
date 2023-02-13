@@ -174,6 +174,13 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
             Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, propertyItem.schema, ..packageModel, ..spec))
         }
         Set propDef.Description = propertyItem.Description
+
+        Do ..GetXmlParameters(..spec, propertyItem.schema, .xmlTagName, .xmlItemName)
+
+        Do:xmlTagName'="" propDef.Parameters.SetAt(xmlTagName, "XMLNAME")
+        Do:xmlItemName'="" propDef.Parameters.SetAt(xmlItemName, "XMLITEMNAME")
+        
+
         Do:newProp classDef.Properties.Insert(propDef)
     }
 
@@ -285,6 +292,23 @@ ClassMethod GetContentTypeListForProperty(propertyName, operation As %DynamicObj
     }
 
     Quit $Extract(list, 2, *)
+}
+
+ClassMethod GetXmlParameters(spec As %DynamicObject, schema As %DynamicObject, Output xmlName, Output xmlItemName)
+{
+    Set (xmlName, xmlItemName) = ""
+
+    Quit:'$ISOBJECT(schema)
+    
+    Set tSchema = {}.%FromJSON(schema.%ToJSON())
+
+    If tSchema."$ref" '= "" Set tSchema = ##class(dc.openapi.common.Utils).GetObjectByRef(spec, tSchema."$ref")
+    If tSchema.items."$ref" '= "" Set tSchema.items = ##class(dc.openapi.common.Utils).GetObjectByRef(spec, tSchema.items."$ref")
+
+    If $IsObject(tSchema.xml), tSchema.xml.name '= "" Set xmlName = tSchema.xml.name
+    If $IsObject(tSchema.items), $IsObject(tSchema.items.xml), tSchema.items.xml.name '= "" Set xmlItemName = tSchema.items.xml.name
+
+    Quit
 }
 
 }
