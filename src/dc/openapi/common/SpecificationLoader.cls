@@ -95,7 +95,7 @@ ClassMethod isYAML(stream As %Stream.Object) As %Boolean
     Do stream.Rewind()
     Set buffer = $ZSTRIP(stream.Read(),"<W")
     Do stream.Rewind()
-    Quit ($EXTRACT(buffer) '= "{") && ((buffer [ "swagger: ")||buffer [ "openapi:")
+    Quit ($EXTRACT(buffer) '= "{") && ((buffer [ "swagger:")||(buffer [ "openapi:"))
 }
 
 ClassMethod convertYAMLToJSON(stream As %Stream.Object, Output sc As %Status) As %DynamicObject
