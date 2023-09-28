@@ -98,11 +98,22 @@ ClassMethod isYAML(stream As %Stream.Object) As %Boolean
     Quit ($EXTRACT(buffer) '= "{") && ((buffer [ "swagger:")||(buffer [ "openapi:"))
 }
 
+/// Convert YAML to JSON
 ClassMethod convertYAMLToJSON(stream As %Stream.Object, Output sc As %Status) As %DynamicObject
 {
     Set lt = stream.Read()
-	Set:lt[$CHAR(13,10) stream.LineTerminator = $CHAR(13,10)
-	Do stream.Rewind()
+
+    // Make sure that the lineTerminator is also set if there are no CRLF line separators
+	If lt [ $CHAR(13,10)
+    {
+        Set stream.LineTerminator = $CHAR(13,10)
+    }
+    Else
+    {
+        Set stream.LineTerminator = $CHAR(10)
+    }
+
+    Do stream.Rewind()
     Quit ##class(YAML.Utils).StreamToJSON(stream, .sc)
 }
 
