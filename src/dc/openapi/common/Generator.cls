@@ -82,7 +82,11 @@ Method IterateOnResponses(callBackMethod As %String) As %Status [ Private ]
     Quit sc
 }
 
-Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method As %String, operation As %DynamicObject) As %Status
+Method GenerateRequestClass(
+	path As %String,
+	pathItem As %DynamicObject,
+	method As %String,
+	operation As %DynamicObject) As %Status
 {
     Set sc = $$$OK
     
@@ -166,8 +170,9 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
     Set helperObj = ..RequestBodyHelper(operation.requestBody.content), helperObjIterator = helperObj.%GetIterator()
 
     While helperObjIterator.%GetNext(.propertyName, .propertyItem) {
-        Set propDef = $$$FindPropertyName(classDef, propertyName), newProp = $$$NO
-        Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ propertyName), newProp = $$$YES
+        ; Add $$$CodeNormalizeProperty to avoid generate double quoted property like "my_property_with_special_char"
+        Set propDef = $$$FindPropertyName(classDef, $$$CodeNormalizeProperty(propertyName)), newProp = $$$NO
+        Set:'$IsObject(propDef) propDef = ##class(%Dictionary.PropertyDefinition).%New(classDef.Name _ ":" _ $$$CodeNormalizeProperty(propertyName)), newProp = $$$YES
         If propertyItem.%IsDefined("Type") {
             Set propDef.Type = propertyItem.Type
         } Else {
@@ -189,7 +194,10 @@ Method GenerateRequestClass(path As %String, pathItem As %DynamicObject, method 
     Quit sc
 }
 
-ClassMethod CheckAndGenerateOperationId(method As %String, operation As %DynamicObject, path As %String) As %Status
+ClassMethod CheckAndGenerateOperationId(
+	method As %String,
+	operation As %DynamicObject,
+	path As %String) As %Status
 {
     If operation.operationId = "" { ; In order to ease the code generation, we generate an operationId
     
@@ -206,7 +214,9 @@ ClassMethod CheckAndGenerateOperationId(method As %String, operation As %Dynamic
     Quit $$$OK
 }
 
-ClassMethod GetOperationParameters(pathItem As %DynamicObject, operation As %DynamicObject) As %DynamicArray
+ClassMethod GetOperationParameters(
+	pathItem As %DynamicObject,
+	operation As %DynamicObject) As %DynamicArray
 {
     #dim parameters As %DynamicArray = []
 
@@ -268,7 +278,9 @@ ClassMethod RequestBodyHelper(contentDefinition As %DynamicObject) As %DynamicOb
     Quit bodyDef
 }
 
-ClassMethod isBodyProperty(propertyName As %String, operation As %DynamicObject) As %Boolean
+ClassMethod isBodyProperty(
+	propertyName As %String,
+	operation As %DynamicObject) As %Boolean
 {
     If '$ISOBJECT(operation.requestBody)||'$IsObject(operation.requestBody.content) Quit $$$NO
 
@@ -277,7 +289,9 @@ ClassMethod isBodyProperty(propertyName As %String, operation As %DynamicObject)
     Quit helperObj.%IsDefined(propertyName)
 }
 
-ClassMethod GetContentTypeListForProperty(propertyName, operation As %DynamicObject) As %String
+ClassMethod GetContentTypeListForProperty(
+	propertyName,
+	operation As %DynamicObject) As %String
 {
     If '$ISOBJECT(operation.requestBody)||'$IsObject(operation.requestBody.content) Quit ""
 
@@ -294,7 +308,11 @@ ClassMethod GetContentTypeListForProperty(propertyName, operation As %DynamicObj
     Quit $Extract(list, 2, *)
 }
 
-ClassMethod GetXmlParameters(spec As %DynamicObject, schema As %DynamicObject, Output xmlName, Output xmlItemName)
+ClassMethod GetXmlParameters(
+	spec As %DynamicObject,
+	schema As %DynamicObject,
+	Output xmlName,
+	Output xmlItemName)
 {
     Set (xmlName, xmlItemName) = ""
 

@@ -6,7 +6,9 @@ Class dc.openapi.common.SpecificationLoader
 
 /// Return the swagger specification in a dynamic object <br/>
 /// spec argument could be a stream, a dynamic object or an URL.<br/>
-ClassMethod AbstractSpecLoader(spec, ByRef sc As %Status = {$$$OK}) As %DynamicObject
+ClassMethod AbstractSpecLoader(
+	spec,
+	ByRef sc As %Status = {$$$OK}) As %DynamicObject
 {
     Set returnSpec = "", sc = $$$OK
 
@@ -36,7 +38,7 @@ ClassMethod AbstractSpecLoader(spec, ByRef sc As %Status = {$$$OK}) As %DynamicO
 
         ; Now check if it's a OpenAPI 3 specification and convert if it's a previous version.
 
-       If returnSpec.%IsDefined("swagger") {
+        If returnSpec.%IsDefined("swagger") {
             ; This is not an OpenAPI 3 specification
             ; The library does not support only version 3
             ; We attempt to convert this specification to version 3 https://converter.swagger.io/
@@ -44,22 +46,44 @@ ClassMethod AbstractSpecLoader(spec, ByRef sc As %Status = {$$$OK}) As %DynamicO
             $$$zlog("Not an OpenAPI V3 specification, try to convert using swagger converter... ")
 
             Set webConverter = ##class(dc.swaggerconverter.WebConverter).%New()
-            Set webConverter.specification = returnSpec
 
-            $$$TOE(sc, webConverter.Convert(.OpenAPIV3))
+            ; If the spec is an url we convert later after resolve external references
+            If $$$LOWER($EXTRACT(spec, 1, 4)) '= "http" {
+                Set webConverter.specification = returnSpec
+                $$$TOE(sc, webConverter.Convert(.OpenAPIV3))
+            }
 
             Set returnSpec = OpenAPIV3
 
             $$$zlog("Conversion to version 3 done.")
-
         }
 
         $$$zlog("* Parse the definition with flatten=true to simplify the structure ... ")
 
         Set webValidator = ##class(dc.swaggervalidatorcli.WebSwaggerValidator).%New()
-        Set webValidator.specification = returnSpec
-        Set queryParameters("flatten")="true", OpenAPIV3 = ""
-        Set sc = webValidator.Parse(.queryParameters, .OpenAPIV3)
+        Set OpenAPIV3 = ""
+        Set queryParameters("flatten")="true"
+
+        If $$$LOWER($EXTRACT(spec, 1, 4)) = "http" {
+            ; Add external references support
+            Set queryParameters("resolveFully")="true"
+            Set queryParameters("validateExternalRefs")="true"
+            Set:$$$LOWER($EXTRACT(spec, 1, 4))="http" queryParameters("url") = spec
+            Set sc = webValidator.ParseByUrl(.queryParameters, .OpenAPI)
+
+            If $$$ISERR(sc) $$$ThrowStatus(sc)
+
+            If returnSpec.%IsDefined("swagger") { ; Not V3, we need to convert.
+                Set webConverter.specification = OpenAPI
+                $$$TOE(sc, webConverter.Convert(.OpenAPIV3))
+            } Else { ; Ok it's already V3
+                Set OpenAPIV3 = OpenAPI
+            }
+
+        } Else {
+            Set webValidator.specification = returnSpec
+            Set sc = webValidator.Parse(.queryParameters, .OpenAPIV3)
+        }
 
         If $$$ISERR(sc) $$$ThrowStatus(sc)
 
@@ -99,7 +123,9 @@ ClassMethod isYAML(stream As %Stream.Object) As %Boolean
 }
 
 /// Convert YAML to JSON
-ClassMethod convertYAMLToJSON(stream As %Stream.Object, Output sc As %Status) As %DynamicObject
+ClassMethod convertYAMLToJSON(
+	stream As %Stream.Object,
+	Output sc As %Status) As %DynamicObject
 {
     Set lt = stream.Read()
 
