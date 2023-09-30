@@ -6,6 +6,8 @@
 
 # openapi-common-lib
 
+**Important** : **To make maintenance easier, this package has been merged with  [openapi-suite](https://openexchange.intersystems.com/package/OpenAPI-Suite) ( [Link to GitHub repository](https://github.com/lscalese/openapi-suite) ).  Consider this package deprecated and replaced by openapi-suite (classes have kept the same name)**
+
 This library contains common code for [openapi-client-gen](https://github.com/lscalese/OpenAPI-Client-Gen) and [openapi-server-gen](https://github.com/lscalese/openapi-server-gen).  
 It makes no sense to use it alone.  
 
