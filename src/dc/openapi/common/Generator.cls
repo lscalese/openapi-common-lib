@@ -164,9 +164,14 @@ Method GenerateRequestClass(
         Set sc = $$$ADDSC(sc, ##class(dc.openapi.common.Utils).CommonSchemaProcessForFlatteSpec(classDef, propDef, parameter.schema, ..packageModel, ..spec))
 
     }
+    If $IsObject(operation.requestBody), operation.requestBody.%IsDefined("$ref") {
+        Set refContent = ##class(dc.openapi.common.Utils).GetObjectByRef(..spec, operation.requestBody."$ref")
+        Set:$IsObject(refContent) operation.requestBody.content = refContent.content
+    }
 
     If '$ISOBJECT(operation.requestBody)||'$IsObject(operation.requestBody.content) Quit $$$ADDSC(sc, classDef.%Save())
-
+    zw operation.requestBody.content
+    
     Set helperObj = ..RequestBodyHelper(operation.requestBody.content), helperObjIterator = helperObj.%GetIterator()
 
     While helperObjIterator.%GetNext(.propertyName, .propertyItem) {
@@ -235,7 +240,7 @@ ClassMethod RequestBodyHelper(contentDefinition As %DynamicObject) As %DynamicOb
         Set isEmptySchema = 'contentTypeItem.%IsDefined("schema")
         Set:'isEmptySchema isEmptySchema = (contentTypeItem.schema."$ref" = "") && (contentTypeItem.schema.type = "")
 
-        Set type = "", propertyName = "body" ; property name by default, if possible it will be changed with an appropriate name.
+        Set type = "%Stream.Object", propertyName = "body" ; property name by default, if possible it will be changed with an appropriate name.
 
         If isEmptySchema {
             Set thePropType = $Select($$$LOWER(contentType)="application/json":"%DynamicObject",1:"%Stream.Object")
@@ -244,8 +249,8 @@ ClassMethod RequestBodyHelper(contentDefinition As %DynamicObject) As %DynamicOb
             } Else {
                 Set type = "%Stream.Object", propertyName = "bodyStream"
             }
-        } Else {
-            Set:contentTypeItem.schema."$ref"'="" propertyName = $Piece(contentTypeItem.schema."$ref", "/", *)
+        } ElseIf contentTypeItem.schema."$ref"'="" {
+            Set propertyName = $Piece(contentTypeItem.schema."$ref", "/", *)
         }
 
         If contentTypeItem.schema.type = "array", contentTypeItem.schema.items.%IsDefined("$ref") {
